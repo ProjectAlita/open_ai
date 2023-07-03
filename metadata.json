@@ -1,0 +1,8 @@
+{
+  "name": "Carrier OpenAI Plugin",
+  "version": "0.1",
+  "module": "plugins.open_ai",
+  "extract": false,
+  "depends_on": ["integrations"],
+  "init_after": []
+}
