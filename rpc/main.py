@@ -33,7 +33,7 @@ class RPC:
             result = response['choices'][0]['text']
         except Exception as e:
             log.error(str(e))
-            return {"ok": False, "error": "Error in connection"}
+            return {"ok": False, "error": f"{str(e)}"}
         return {"ok": True, "response": result}
     
     @web.rpc(f'{integration_name}__parse_settings')
