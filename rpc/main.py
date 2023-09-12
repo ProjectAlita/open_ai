@@ -22,13 +22,17 @@ class RPC:
 
         try:
             api_key = SecretField.parse_obj(settings.api_token).unsecret(project_id)
+            openai.api_key = api_key
+            openai.api_type = settings.api_type
+            openai.api_version = settings.api_version
+            openai.api_base = settings.api_base
+
             response = openai.Completion.create(
                 model=settings.model_name,
                 prompt=text_prompt,
                 temperature=settings.temperature,
                 max_tokens=settings.max_tokens,
                 top_p=settings.top_p,
-                api_key=api_key,
             )
             result = response['choices'][0]['text']
         except Exception as e:
