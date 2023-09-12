@@ -22,20 +22,20 @@ class RPC:
 
         try:
             api_key = SecretField.parse_obj(settings.api_token).unsecret(project_id)
-            openai.api_key = api_key
             response = openai.Completion.create(
                 model=settings.model_name,
                 prompt=text_prompt,
                 temperature=settings.temperature,
                 max_tokens=settings.max_tokens,
                 top_p=settings.top_p,
+                api_key=api_key,
             )
             result = response['choices'][0]['text']
         except Exception as e:
             log.error(str(e))
             return {"ok": False, "error": f"{str(e)}"}
         return {"ok": True, "response": result}
-    
+
     @web.rpc(f'{integration_name}__parse_settings')
     @rpc_tools.wrap_exceptions(RuntimeError)
     def parse_settings(self, settings):
