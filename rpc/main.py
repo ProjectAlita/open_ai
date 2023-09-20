@@ -8,6 +8,31 @@ import openai
 from ...integrations.models.pd.integration import SecretField
 
 
+def _prepare_conversation(prompt_struct):
+    conversation = []
+    if prompt_struct.get('context'):
+        conversation.append({
+            "role": "system",
+            "content": prompt_struct['context']
+        })
+    if prompt_struct.get('examples'):
+        for example in prompt_struct['examples']:
+            conversation.append({
+                "role": "user",
+                "content": example['input']
+            })
+            conversation.append({
+                "role": "assistant",
+                "content": example['output']
+            })
+    if prompt_struct.get('prompt'):
+        conversation.append({
+            "role": "user",
+            "content": prompt_struct['prompt']
+        })
+
+    return conversation
+
 class RPC:
     integration_name = 'open_ai'
 
@@ -23,19 +48,25 @@ class RPC:
         try:
             api_key = SecretField.parse_obj(settings.api_token).unsecret(project_id)
             openai.api_key = api_key
-            response = openai.Completion.create(
+            openai.api_type = settings.api_type
+            openai.api_version = settings.api_version
+            openai.api_base = settings.api_base
+
+            conversation = _prepare_conversation(text_prompt)
+
+            response = openai.ChatCompletion.create(
                 model=settings.model_name,
-                prompt=text_prompt,
                 temperature=settings.temperature,
                 max_tokens=settings.max_tokens,
                 top_p=settings.top_p,
+                messages=conversation
             )
-            result = response['choices'][0]['text']
+            result = response['choices'][0]['message']['content']
         except Exception as e:
             log.error(str(e))
             return {"ok": False, "error": f"{str(e)}"}
         return {"ok": True, "response": result}
-    
+
     @web.rpc(f'{integration_name}__parse_settings')
     @rpc_tools.wrap_exceptions(RuntimeError)
     def parse_settings(self, settings):
