@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from tools import session_project
+from tools import session_project, rpc_tools
 from pylon.core.tools import log
 from ...integrations.models.pd.integration import SecretField
 import openai
@@ -16,6 +16,7 @@ class OpenAISettings(BaseModel):
 class IntegrationModel(BaseModel):
     api_token: SecretField | str
     model_name: str = 'text-davinci-003'
+    models: list = []
     api_version: str | None = None
     api_base: str = "https://api.openai.com/v1"
     api_type: str = "open_ai"
@@ -34,3 +35,12 @@ class IntegrationModel(BaseModel):
             log.error(e)
             return str(e)
         return True
+
+    def refresh_models(self, project_id):
+        integration_name = 'open_ai'
+        payload = {
+            'name': integration_name,
+            'settings': self.dict(),
+            'project_id': project_id
+        }
+        return getattr(rpc_tools.RpcMixin().rpc.call, f'{integration_name}_set_models')(payload)
