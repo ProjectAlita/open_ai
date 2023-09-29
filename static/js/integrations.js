@@ -37,8 +37,8 @@ const OpenAiIntegrationModal = {
             </div>
             <div class="invalid-feedback d-block">[[ error.models ]]</div>
             <div>
-                <button class="btn btn btn-painted mr-1 rounded-pill mb-1" v-for="model in models"
-                    >[[ model ]]
+                <button class="btn btn btn-painted mr-1 rounded-pill mb-1" v-for="(model, index) in models"
+                    @click="deleteModel(index)">[[ model.id ]]
                 </button>
             </div>
             <open-ai-models-button
@@ -198,6 +198,9 @@ const OpenAiIntegrationModal = {
                 this.error.models = 'At least one model is required'
                 return true
             }
+        },
+        deleteModel(index) {
+            this.models.splice(index, 1);
         },
         initialState: () => ({
             modal_style: {'height': '100px', 'border': ''},
