@@ -1,10 +1,9 @@
-from pylon.core.tools import log  # pylint: disable=E0611,E0401
-from pylon.core.tools import web
+from pylon.core.tools import web, log
 
 from tools import rpc_tools
-from ..models.integration_pd import IntegrationModel, OpenAISettings
 from pydantic import ValidationError
-import openai
+
+from ..models.integration_pd import IntegrationModel, OpenAISettings
 from ...integrations.models.pd.integration import SecretField
 
 
@@ -51,6 +50,8 @@ class RPC:
     @rpc_tools.wrap_exceptions(RuntimeError)
     def predict(self, project_id, settings, text_prompt):
         """ Predict function """
+        import openai
+
         try:
             settings = IntegrationModel.parse_obj(settings)
         except ValidationError as e:
@@ -92,6 +93,8 @@ class RPC:
     @web.rpc(f'{integration_name}_set_models', 'set_models')
     @rpc_tools.wrap_exceptions(RuntimeError)
     def set_models(self, payload: dict):
+        import openai
+
         api_key = SecretField.parse_obj(payload['settings'].get('api_token', {})).unsecret(payload.get('project_id'))
         openai.api_key = api_key
         openai.api_type = payload['settings'].get('api_type')
