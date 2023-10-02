@@ -16,10 +16,24 @@
 #   limitations under the License.
 
 """ Module """
+import json
 from pylon.core.tools import log  # pylint: disable=E0611,E0401
-from pylon.core.tools import module  # pylint: disable=E0611,E0401
+from pylon.core.tools import module
+
+from tools import VaultClient  # pylint: disable=E0611,E0401
 
 from .models.integration_pd import IntegrationModel
+
+
+CAPATIBILITIES_MAP = {
+    'completion':
+        ['gpt-3.5-turbo-instruct', 'babbage-002', 'davinci-002'],
+    'chat_completion':
+        ['gpt-4', 'gpt-4-0613', 'gpt-4-32k', 'gpt-4-32k-0613', 'gpt-3.5-turbo',
+         'gpt-3.5-turbo-0613', 'gpt-3.5-turbo-16k', 'gpt-3.5-turbo-16k-0613'],
+    'embeddings':
+        ['text-embedding-ada-002']
+}
 
 
 class Module(module.ModuleModel):
@@ -49,6 +63,13 @@ class Module(module.ModuleModel):
             section=SECTION_NAME,
             settings_model=IntegrationModel,
         )
+
+        vault_client = VaultClient()
+        secrets = vault_client.get_all_secrets()
+        if 'open_ai_capatibilities_map' not in secrets:
+            secrets['open_ai_capatibilities_map'] = json.dumps(CAPATIBILITIES_MAP)
+
+        vault_client.set_secrets(secrets)
 
     def deinit(self):  # pylint: disable=R0201
         """ De-init module """
