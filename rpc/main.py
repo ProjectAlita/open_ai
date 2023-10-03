@@ -1,80 +1,36 @@
 from pylon.core.tools import web, log
+from traceback import format_exc
 
 from tools import rpc_tools
 from pydantic import ValidationError
 
-from ..models.integration_pd import IntegrationModel, OpenAISettings
+from ..models.integration_pd import OpenAISettings, AIModel
+from ..utils import predict_chat, predict_text
 from ...integrations.models.pd.integration import SecretField
 
-
-def _prepare_conversation(prompt_struct):
-    conversation = []
-    if prompt_struct.get('context'):
-        conversation.append({
-            "role": "system",
-            "content": prompt_struct['context']
-        })
-    if prompt_struct.get('examples'):
-        for example in prompt_struct['examples']:
-            conversation.append({
-                "role": "user",
-                "content": example['input']
-            })
-            conversation.append({
-                "role": "assistant",
-                "content": example['output']
-            })
-    if prompt_struct.get('prompt'):
-        conversation.append({
-            "role": "user",
-            "content": prompt_struct['prompt']
-        })
-
-    return conversation
-
-def _prepare_result(response):
-    structured_result = {'messages': []}
-    structured_result['messages'].append({
-        'type': 'text',
-        'content': response['choices'][0]['message']['content']
-    })
-    return structured_result
 class RPC:
     integration_name = 'open_ai'
 
     @web.rpc(f'{integration_name}__predict')
     @rpc_tools.wrap_exceptions(RuntimeError)
-    def predict(self, project_id, settings, text_prompt):
+    def predict(self, project_id, settings, prompt_struct):
         """ Predict function """
-        import openai
+        models = settings.get('models', [])
+        capabilities = next((model['capabilities'] for model in models if model['id'] == settings['model_name']), {})
 
         try:
-            settings = IntegrationModel.parse_obj(settings)
-        except ValidationError as e:
-            return {"ok": False, "error": e}
-
-        try:
-            api_key = SecretField.parse_obj(settings.api_token).unsecret(project_id)
-            openai.api_key = api_key
-            openai.api_type = settings.api_type
-            openai.api_version = settings.api_version
-            openai.api_base = settings.api_base
-
-            conversation = _prepare_conversation(text_prompt)
-
-            response = openai.ChatCompletion.create(
-                model=settings.model_name,
-                temperature=settings.temperature,
-                max_tokens=settings.max_tokens,
-                top_p=settings.top_p,
-                messages=conversation
-            )
-            # result = response['choices'][0]['message']['content']
-            result = _prepare_result(response)
-
+            if capabilities.get('chat_completion'):
+                log.info('Using chat prediction for model: %s', settings['model_name'])
+                result = predict_chat(project_id, settings, prompt_struct)
+            elif capabilities.get('completion'):
+                log.info('Using completion(text) prediction for model: %s', settings['model_name'])
+                result = predict_text(project_id, settings, prompt_struct)
+            else:
+                raise Exception(f"Model {settings['model_name']} does not support chat or text completion")
         except Exception as e:
-            log.error(str(e))
-            return {"ok": False, "error": f"{str(e)}"}
+            log.error(format_exc())
+            return {"ok": False, "error": f"{type(e)}: {str(e)}"}
+
         return {"ok": True, "response": result}
 
     @web.rpc(f'{integration_name}__parse_settings')
@@ -103,4 +59,5 @@ class RPC:
             models = []
         if models:
             models = models.get('data', [])
+            models = [AIModel(id=model['id'], name=model['id']).dict(by_alias=True) for model in models]
         return models
