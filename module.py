@@ -35,6 +35,24 @@ CAPATIBILITIES_MAP = {
         ['text-embedding-ada-002']
 }
 
+TOKEN_LIMITS = {
+    'gpt-3.5-turbo-instruct': 4097,
+    'babbage-002': 16384,
+    'davinci-002': 16384,
+    'gpt-4': 8192,
+    'gpt-4-0613': 8192,
+    'gpt-4-32k': 32768,
+    'gpt-4-32k-0613': 32768,
+    'gpt-3.5-turbo': 4097,
+    'gpt-3.5-turbo-0613': 4097,
+    'gpt-3.5-turbo-16k': 16385,
+    'gpt-3.5-turbo-16k-0613': 16385,
+    'text-embedding-ada-002': None,
+    'text-davinci-003': 4097,
+    'text-davinci-002': 4097,
+    'code-davinci-002': 8001
+}
+
 
 class Module(module.ModuleModel):
     """ Task module """
@@ -68,8 +86,10 @@ class Module(module.ModuleModel):
         secrets = vault_client.get_all_secrets()
         if 'open_ai_capatibilities_map' not in secrets:
             secrets['open_ai_capatibilities_map'] = json.dumps(CAPATIBILITIES_MAP)
-
-        vault_client.set_secrets(secrets)
+            vault_client.set_secrets(secrets)
+        if 'open_ai_token_limits' not in secrets:
+            secrets['open_ai_token_limits'] = json.dumps(TOKEN_LIMITS)
+            vault_client.set_secrets(secrets)
 
     def deinit(self):  # pylint: disable=R0201
         """ De-init module """
