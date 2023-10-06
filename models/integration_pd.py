@@ -41,7 +41,7 @@ class AIModel(BaseModel):
         capabilities = CapabilitiesModel()
         if capabilities_map := get_capabilities_map():
             for capability, models in capabilities_map.items():
-                if any([model in values['id'] for model in models]):
+                if any([model == values['id'] for model in models]):
                     setattr(capabilities, capability, True)
         return capabilities
 
