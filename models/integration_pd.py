@@ -13,16 +13,22 @@ def get_capabilities_map():
     return json.loads(secrets.get('open_ai_capatibilities_map', ''))
 
 
+def get_token_limits():
+    vault_client = VaultClient()
+    secrets = vault_client.get_all_secrets()
+    return json.loads(secrets.get('open_ai_token_limits', ''))
+
+
 class CapabilitiesModel(BaseModel):
     completion: bool = False
     chat_completion: bool = False
     embeddings: bool = False
 
-
 class AIModel(BaseModel):
     id: str
     name: str
     capabilities: dict = {}
+    token_limit: Optional[int]
 
     @validator('name', always=True, check_fields=False)
     def name_validator(cls, value, values):
@@ -35,10 +41,16 @@ class AIModel(BaseModel):
         capabilities = CapabilitiesModel()
         if capabilities_map := get_capabilities_map():
             for capability, models in capabilities_map.items():
-                if any([model in values['id'] for model in models]):
+                if any([model == values['id'] for model in models]):
                     setattr(capabilities, capability, True)
         return capabilities
 
+    @validator('token_limit', always=True, check_fields=False)
+    def token_limit_validator(cls, value, values):
+        if value:
+            return value
+        token_limits = get_token_limits()
+        return token_limits.get(values.get('id'), 8096)
 
 class IntegrationModel(BaseModel):
     api_token: SecretField | str

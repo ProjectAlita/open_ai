@@ -59,5 +59,5 @@ class RPC:
             models = []
         if models:
             models = models.get('data', [])
-            models = [AIModel(id=model['id'], name=model['id']).dict(by_alias=True) for model in models]
+            models = [AIModel(id=model['id'], name=model['id']).dict() for model in models]
         return models
