@@ -1,9 +1,19 @@
+from openai import ChatCompletion, Completion
 from collections import deque
 import tiktoken
 from .models.integration_pd import IntegrationModel
-
+from .models.request_body import ChatCompletionRequestBody, CompletionRequestBody
 from pylon.core.tools import log
 # from ..integrations.models.pd.integration import SecretField
+
+
+def init_openai(settings, project_id):
+    return {
+        'api_key': settings.api_token.unsecret(project_id),
+        'api_type': settings.api_type,
+        'api_version': settings.api_version,
+        'api_base': settings.api_base
+    }
 
 
 def num_tokens_from_messages(messages: list, model: str):
@@ -35,9 +45,8 @@ def num_tokens_from_messages(messages: list, model: str):
         log.warning("Warning: gpt-4 may update over time. Returning num tokens assuming gpt-4-0613.")
         return num_tokens_from_messages(messages, model="gpt-4-0613")
     else:
-        raise NotImplementedError(
-            f"""num_tokens_from_messages() is not implemented for model {model}. See https://github.com/openai/openai-python/blob/main/chatml.md for information on how messages are converted to tokens."""
-        )
+        tokens_per_message = 4
+        tokens_per_name = -1
     num_tokens = 0
     for message in messages:
         num_tokens += tokens_per_message
@@ -58,8 +67,10 @@ def limit_conversation(
 
         context_tokens = num_tokens_from_messages(conversation['context'], model_name)
         remaining_tokens -= context_tokens
+
         if remaining_tokens < 0:
             return limited_conversation
+
         limited_conversation.extend(conversation['context'])
 
         input_tokens = num_tokens_from_messages(conversation['input'], model_name)
@@ -111,15 +122,16 @@ def prepare_conversation(
     if prompt_struct.get('examples'):
         for example in prompt_struct['examples']:
             conversation['examples'].append({
-                "role": "system",
+                "role": "user",
                 "name": "example_user",
                 "content": example['input']
             })
-            conversation['examples'].append({
-                "role": "system",
-                "name": "example_assistant",
-                "content": example['output']
-            })
+            if example.get("output", None):
+                conversation['examples'].append({
+                    "role": "assistant",
+                    "name": "example_assistant",
+                    "content": example['output']
+                })
     if prompt_struct.get('chat_history'):
         for message in prompt_struct['chat_history']:
             conversation['chat_history'].append({
@@ -150,6 +162,28 @@ def prerare_text_prompt(prompt_struct):
     return prompt_struct['context']
 
 
+def limit_messages(messages: list, model_name: str, max_response_tokens: int, token_limit: int) -> list:
+    conversation = {
+        'context': [],
+        'examples': [],
+        'chat_history': [],
+        'input': []
+    }
+    for idx, message in enumerate(messages):
+        if message['role'] == 'system' and not message.get('name'):
+            conversation['context'].append(message)
+        if message.get("name") in ("example_user", "example_assistant"):
+            conversation['examples'].append(message)
+        if message['role'] == 'user' and idx != len(messages) - 1:
+            conversation['chat_history'].append(message)
+        if message['role'] == 'assistant':
+            conversation['chat_history'].append(message)
+    if messages[-1]['role'] == 'user':
+        conversation['input'].append(messages[-1])
+
+    return limit_conversation(conversation, model_name, max_response_tokens, token_limit)
+
+
 def prepare_result(content):
     structured_result = {'messages': []}
     structured_result['messages'].append({
@@ -160,26 +194,20 @@ def prepare_result(content):
 
 
 def predict_chat(project_id: int, settings: dict, prompt_struct: dict) -> str:
-    import openai
-
     settings = IntegrationModel.parse_obj(settings)
-
-    api_key = settings.api_token.unsecret(project_id)
-    openai.api_key = api_key
-    openai.api_type = settings.api_type
-    openai.api_version = settings.api_version
-    openai.api_base = settings.api_base
+    init_settings = init_openai(settings, project_id)
 
     token_limit = settings.token_limit
     conversation = prepare_conversation(
         prompt_struct, settings.model_name, settings.max_tokens, token_limit)
 
-    response = openai.ChatCompletion.create(
+    response = ChatCompletion.create(
         model=settings.model_name,
         temperature=settings.temperature,
         max_tokens=settings.max_tokens,
         top_p=settings.top_p,
-        messages=conversation
+        messages=conversation,
+        **init_settings
     )
 
     content = response['choices'][0]['message']['content']
@@ -187,25 +215,40 @@ def predict_chat(project_id: int, settings: dict, prompt_struct: dict) -> str:
     return prepare_result(content)
 
 
-def predict_text(project_id: int, settings: dict, prompt_struct: dict) -> str:
-    import openai
-
+def predict_chat_from_request(project_id: int, settings: dict, request_data: dict) -> str:
+    params = ChatCompletionRequestBody.validate(request_data).dict(exclude_unset=True)
     settings = IntegrationModel.parse_obj(settings)
+    init_settings = init_openai(settings, project_id)
 
-    api_key = settings.api_token.unsecret(project_id)
-    openai.api_key = api_key
-    openai.api_type = settings.api_type
-    openai.api_version = settings.api_version
-    openai.api_base = settings.api_base
+    token_limit = settings.get_token_limit(params['model'])
+    max_tokens = params.get('max_tokens', 0)
+    if params.get('messages'):
+        params['messages'] = limit_messages(
+            params['messages'], params['model'], max_tokens, token_limit
+            )
 
+    return ChatCompletion.create(**params, **init_settings)
+
+
+def predict_from_request(project_id: int, settings: dict, request_data: dict) -> str:
+    params = CompletionRequestBody.validate(request_data).dict(exclude_unset=True)
+    settings = IntegrationModel.parse_obj(settings)
+    init_settings = init_openai(settings, project_id)
+    return Completion.create(**params, **init_settings)
+
+
+def predict_text(project_id: int, settings: dict, prompt_struct: dict) -> str:
+    settings = IntegrationModel.parse_obj(settings)
+    init_settings = init_openai(settings, project_id)
     text_prompt = prerare_text_prompt(prompt_struct)
 
-    response = openai.Completion.create(
+    response = Completion.create(
         model=settings.model_name,
         temperature=settings.temperature,
         max_tokens=settings.max_tokens,
         top_p=settings.top_p,
-        prompt=text_prompt
+        prompt=text_prompt,
+        **init_settings
     )
 
     content = response['choices'][0]['text']
