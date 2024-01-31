@@ -77,8 +77,10 @@ class IntegrationModel(BaseModel):
     def get_token_limit(self, model_name):
         return next((model.token_limit for model in self.models if model.id == model_name), 8096)
 
-    def check_connection(self, project_id):
+    def check_connection(self, project_id=None):
         from openai import Model
+        if not project_id:
+            project_id = session_project.get()
         api_key = self.api_token.unsecret(project_id)
         api_type = self.api_type
         api_version = self.api_version
