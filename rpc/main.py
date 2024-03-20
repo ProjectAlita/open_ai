@@ -92,6 +92,9 @@ class RPC:
                 models = []
         #
         if models:
-            models = models.get('data', [])
+            try:
+                models = models.get('data', [])
+            except:
+                pass
             models = [AIModel(id=model['id'], name=model['id']).dict() for model in models]
         return models
