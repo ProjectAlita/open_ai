@@ -73,7 +73,6 @@ class RPC:
         api_type = payload['settings'].get('api_type')
         api_base = payload['settings'].get('api_base')
         api_version = payload['settings'].get('api_version')
-        models
         try:
             from openai import Model
             models = Model.list(
