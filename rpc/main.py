@@ -94,7 +94,7 @@ class RPC:
         if models:
             try:
                 models = models.get('data', [])
-                models = [AIModel(id=model['id'], name=model['id']).dict() for model in models]
+                models = [AIModel(**model).dict() for model in models]
             except:
-                models = [AIModel(id=model.id, name=model.id).dict() for model in models]
+                models = [AIModel(id=model.id, name=model.name, capabilities=model.capabilities, token_limit=model.token_limit).dict() for model in models]
         return models
