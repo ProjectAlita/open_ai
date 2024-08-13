@@ -20,7 +20,7 @@ import json
 from pylon.core.tools import log  # pylint: disable=E0611,E0401
 from pylon.core.tools import module
 
-from tools import VaultClient  # pylint: disable=E0611,E0401
+from tools import VaultClient, worker_client  # pylint: disable=E0611,E0401
 
 from .models.integration_pd import IntegrationModel
 
@@ -29,7 +29,7 @@ CAPATIBILITIES_MAP = {
     'completion':
         ['gpt-3.5-turbo-instruct', 'babbage-002', 'davinci-002'],
     'chat_completion':
-        ['gpt-4', 'gpt-4-0613', 'gpt-4-32k', 'gpt-4-32k-0613', 'gpt-3.5-turbo',
+        ['gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo', 'gpt-4', 'gpt-4-0613', 'gpt-4-32k', 'gpt-4-32k-0613', 'gpt-3.5-turbo',
          'gpt-3.5-turbo-0613', 'gpt-3.5-turbo-16k', 'gpt-3.5-turbo-16k-0613'],
     'embeddings':
         ['text-embedding-ada-002']
@@ -65,13 +65,9 @@ class Module(module.ModuleModel):
         """ Init module """
         log.info('Initializing AI module')
         SECTION_NAME = 'ai'
-
-        self.descriptor.init_blueprint()
-        self.descriptor.init_slots()
-        self.descriptor.init_rpcs()
-        self.descriptor.init_events()
-        self.descriptor.init_api()
-
+        #
+        self.descriptor.init_all()
+        #
         self.context.rpc_manager.call.integrations_register_section(
             name=SECTION_NAME,
             integration_description='Manage ai integrations',
@@ -81,7 +77,7 @@ class Module(module.ModuleModel):
             section=SECTION_NAME,
             settings_model=IntegrationModel,
         )
-
+        #
         vault_client = VaultClient()
         secrets = vault_client.get_all_secrets()
         if 'open_ai_capatibilities_map' not in secrets:
@@ -90,7 +86,28 @@ class Module(module.ModuleModel):
         if 'open_ai_token_limits' not in secrets:
             secrets['open_ai_token_limits'] = json.dumps(TOKEN_LIMITS)
             vault_client.set_secrets(secrets)
+        #
+        worker_client.register_integration(
+            integration_name=self.descriptor.name,
+            #
+            ai_check_settings_callback=self.ai_check_settings,
+            ai_get_models_callback=self.ai_get_models,
+            ai_count_tokens_callback=self.count_tokens,
+            #
+            llm_invoke_callback=self.llm_invoke,
+            llm_stream_callback=self.llm_stream,
+            #
+            chat_model_invoke_callback=self.chat_model_invoke,
+            chat_model_stream_callback=self.chat_model_stream,
+            #
+            embed_documents_callback=self.embed_documents,
+            embed_query_callback=self.embed_query,
+            #
+            indexer_config_callback=self.indexer_config,
+        )
 
-    def deinit(self):  # pylint: disable=R0201
+    def deinit(self):
         """ De-init module """
         log.info('De-initializing')
+        #
+        self.descriptor.deinit_all()

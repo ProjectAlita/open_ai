@@ -2,7 +2,7 @@ import json
 from typing import List, Optional
 from pydantic import BaseModel, root_validator, validator
 
-from tools import session_project, rpc_tools, VaultClient
+from tools import session_project, rpc_tools, VaultClient, worker_client, this
 from pylon.core.tools import log
 from ...integrations.models.pd.integration import SecretField
 
@@ -80,28 +80,14 @@ class IntegrationModel(BaseModel):
     def check_connection(self, project_id=None):
         if not project_id:
             project_id = session_project.get()
-        api_key = self.api_token.unsecret(project_id)
-        api_type = self.api_type
-        api_version = self.api_version
-        api_base = self.api_base
-        try:
-            from openai import Model
-            Model.list(
-                api_key=api_key, api_base=api_base, api_type=api_type, api_version=api_version
-                )
-        except Exception as e:
-            try:
-                from openai import OpenAI
-                client = OpenAI(
-                    api_key=api_key,
-                    base_url=api_base,
-                    # api_type and api_version are removed in openai >= 1.0.0
-                )
-                client.models.list()
-            except Exception as e:
-                log.error(e)
-                return str(e)
-        return True
+        #
+        settings = self.dict()
+        settings["api_token"] = self.api_token.unsecret(project_id)
+        #
+        return worker_client.ai_check_settings(
+            integration_name=this.module_name,
+            settings=settings,
+        )
 
     def refresh_models(self, project_id):
         integration_name = 'open_ai'

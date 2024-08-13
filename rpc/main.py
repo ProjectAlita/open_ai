@@ -1,7 +1,7 @@
 from pylon.core.tools import web, log
 from traceback import format_exc
 
-from tools import rpc_tools
+from tools import rpc_tools, worker_client, this
 from pydantic import ValidationError
 
 from ..models.integration_pd import OpenAISettings, AIModel
@@ -69,32 +69,20 @@ class RPC:
     @web.rpc(f'{integration_name}_set_models', 'set_models')
     @rpc_tools.wrap_exceptions(RuntimeError)
     def set_models(self, payload: dict):
-        api_key = SecretField.parse_obj(payload['settings'].get('api_token', {})).unsecret(payload.get('project_id'))
-        api_type = payload['settings'].get('api_type')
-        api_base = payload['settings'].get('api_base')
-        api_version = payload['settings'].get('api_version')
-        try:
-            from openai import Model
-            models = Model.list(
-                api_key=api_key, api_base=api_base, api_type=api_type, api_version=api_version
-                )
-        except Exception as e:
-            try:
-                from openai import OpenAI
-                client = OpenAI(
-                    api_key=api_key,
-                    base_url=api_base,
-                    # api_type and api_version are removed in openai >= 1.0.0
-                )
-                models = client.models.list()
-            except Exception as e:
-                log.error(str(e))
-                models = []
+        if isinstance(payload['settings'].get('api_token', {}), SecretField):
+            token_field = payload['settings'].get('api_token')
+        else:
+            token_field = SecretField.parse_obj(
+                payload['settings'].get('api_token', {})
+            )
         #
-        if models:
-            try:
-                models = models.get('data', [])
-                models = [AIModel(**model).dict() for model in models]
-            except:
-                models = [AIModel(id=model.id, name=model.name, capabilities=model.capabilities, token_limit=model.token_limit).dict() for model in models]
-        return models
+        settings = {
+            "api_token": token_field.unsecret(payload.get('project_id')),
+        }
+        #
+        raw_models = worker_client.ai_get_models(
+            integration_name=this.module_name,
+            settings=settings,
+        )
+        #
+        return [AIModel(**model).dict() for model in raw_models]
