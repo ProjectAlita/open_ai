@@ -411,13 +411,19 @@ class Method:  # pylint: disable=E1101,R0903,W0201
         if model_info is None:
             raise RuntimeError(f"No model info found: {model}")
         #
+        api_token = SecretField.parse_obj(settings["settings"]["api_token"])
+        try:
+            api_token = api_token.unsecret(settings["project_id"])
+        except KeyError:
+            api_token = api_token.unsecret(None)
+        #
         if model_info["capabilities"]["embeddings"]:
             return {
                 "embedding_model": "langchain_openai.embeddings.base.OpenAIEmbeddings",
                 "embedding_model_params": {
                     "model": model,
                     #
-                    "api_key": settings["settings"]["api_token"],
+                    "api_key": api_token,
                 },
             }
         #
@@ -430,7 +436,7 @@ class Method:  # pylint: disable=E1101,R0903,W0201
                     # "temperature": settings["settings"]["temperature"],
                     # "max_tokens": settings["settings"]["max_tokens"],
                     #
-                    "api_key": settings["settings"]["api_token"],
+                    "api_key": api_token,
                 },
             }
         #
@@ -442,6 +448,6 @@ class Method:  # pylint: disable=E1101,R0903,W0201
                 # "temperature": settings["settings"]["temperature"],
                 # "max_tokens": settings["settings"]["max_tokens"],
                 #
-                "api_key": settings["settings"]["api_token"],
+                "api_key": api_token,
             },
         }
