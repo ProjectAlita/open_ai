@@ -411,7 +411,9 @@ class Method:  # pylint: disable=E1101,R0903,W0201
         if model_info is None:
             raise RuntimeError(f"No model info found: {model}")
         #
-        api_token = SecretField.parse_obj(settings["settings"]["api_token"])
+        api_token = SecretField.parse_obj(
+            settings["settings"]["api_token"].get_secret_value()
+        )
         try:
             api_token = api_token.unsecret(settings["project_id"])
         except KeyError:
