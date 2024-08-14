@@ -60,7 +60,7 @@ class IntegrationModel(BaseModel):
     api_base: str = "https://api.openai.com/v1"
     api_type: str = "open_ai"
     temperature: float = 1.0
-    max_tokens: int = 7
+    max_tokens: int = 512
     top_p: float = 0.8
 
     @root_validator(pre=True)
