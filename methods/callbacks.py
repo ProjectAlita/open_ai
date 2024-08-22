@@ -108,6 +108,12 @@ class Method:  # pylint: disable=E1101,R0903,W0201
         except AttributeError:
             api_token = api_token.unsecret(None)
         #
+        model_parameters = {}
+        #
+        for param in ["max_tokens", "temperature", "top_p"]:
+            if param in settings.merged_settings:
+                model_parameters[param] = settings.merged_settings[param]
+        #
         if isinstance(data, list):
             data = json.loads(json.dumps(data))
         #
@@ -131,8 +137,8 @@ class Method:  # pylint: disable=E1101,R0903,W0201
                 "target_args": None,
                 "target_kwargs": {
                     "model": settings.merged_settings["model_name"],
-                    "temperature": settings.merged_settings["temperature"],
-                    "max_tokens": settings.merged_settings["max_tokens"],
+                    #
+                    **model_parameters,
                     #
                     "api_key": api_token,
                 },
@@ -164,6 +170,12 @@ class Method:  # pylint: disable=E1101,R0903,W0201
         except AttributeError:
             api_token = api_token.unsecret(None)
         #
+        model_parameters = {}
+        #
+        for param in ["max_tokens", "temperature", "top_p"]:
+            if param in settings.merged_settings:
+                model_parameters[param] = settings.merged_settings[param]
+        #
         result = {
             "routing_key": None,
             #
@@ -174,8 +186,8 @@ class Method:  # pylint: disable=E1101,R0903,W0201
                 "target_args": None,
                 "target_kwargs": {
                     "model": settings.merged_settings["model_name"],
-                    "temperature": settings.merged_settings["temperature"],
-                    "max_tokens": settings.merged_settings["max_tokens"],
+                    #
+                    **model_parameters,
                     #
                     "api_key": api_token,
                 },
@@ -203,6 +215,12 @@ class Method:  # pylint: disable=E1101,R0903,W0201
         except AttributeError:
             api_token = api_token.unsecret(None)
         #
+        model_parameters = {}
+        #
+        for param in ["max_tokens", "temperature", "top_p"]:
+            if param in settings.merged_settings:
+                model_parameters[param] = settings.merged_settings[param]
+        #
         result = {
             "routing_key": None,
             #
@@ -213,8 +231,8 @@ class Method:  # pylint: disable=E1101,R0903,W0201
                 "target_args": None,
                 "target_kwargs": {
                     "model": settings.merged_settings["model_name"],
-                    "temperature": settings.merged_settings["temperature"],
-                    "max_tokens": settings.merged_settings["max_tokens"],
+                    #
+                    **model_parameters,
                     #
                     "api_key": api_token,
                     #
@@ -249,6 +267,12 @@ class Method:  # pylint: disable=E1101,R0903,W0201
         except AttributeError:
             api_token = api_token.unsecret(None)
         #
+        model_parameters = {}
+        #
+        for param in ["max_tokens", "temperature", "top_p"]:
+            if param in settings.merged_settings:
+                model_parameters[param] = settings.merged_settings[param]
+        #
         result = {
             "routing_key": None,
             #
@@ -259,8 +283,8 @@ class Method:  # pylint: disable=E1101,R0903,W0201
                 "target_args": None,
                 "target_kwargs": {
                     "model": settings.merged_settings["model_name"],
-                    "temperature": settings.merged_settings["temperature"],
-                    "max_tokens": settings.merged_settings["max_tokens"],
+                    #
+                    **model_parameters,
                     #
                     "api_key": api_token,
                 },
@@ -288,6 +312,12 @@ class Method:  # pylint: disable=E1101,R0903,W0201
         except AttributeError:
             api_token = api_token.unsecret(None)
         #
+        model_parameters = {}
+        #
+        for param in ["max_tokens", "temperature", "top_p"]:
+            if param in settings.merged_settings:
+                model_parameters[param] = settings.merged_settings[param]
+        #
         result = {
             "routing_key": None,
             #
@@ -298,8 +328,8 @@ class Method:  # pylint: disable=E1101,R0903,W0201
                 "target_args": None,
                 "target_kwargs": {
                     "model": settings.merged_settings["model_name"],
-                    "temperature": settings.merged_settings["temperature"],
-                    "max_tokens": settings.merged_settings["max_tokens"],
+                    #
+                    **model_parameters,
                     #
                     "api_key": api_token,
                     #
@@ -429,14 +459,19 @@ class Method:  # pylint: disable=E1101,R0903,W0201
                 },
             }
         #
+        model_parameters = {}
+        #
+        for param in ["max_tokens", "temperature", "top_p"]:
+            if param in settings["settings"]:
+                model_parameters[param] = settings["settings"][param]
+        #
         if not model_info["capabilities"]["chat_completion"]:
             return {
                 "ai_model": "langchain_openai.llms.base.OpenAI",
                 "ai_model_params": {
                     "model": model,
                     #
-                    "temperature": settings["settings"]["temperature"],
-                    "max_tokens": settings["settings"]["max_tokens"],
+                    **model_parameters,
                     #
                     "api_key": api_token,
                 },
@@ -447,8 +482,7 @@ class Method:  # pylint: disable=E1101,R0903,W0201
             "ai_model_params": {
                 "model": model,
                 #
-                "temperature": settings["settings"]["temperature"],
-                "max_tokens": settings["settings"]["max_tokens"],
+                **model_parameters,
                 #
                 "api_key": api_token,
             },
