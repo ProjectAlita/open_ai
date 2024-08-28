@@ -22,7 +22,7 @@ import json
 from pylon.core.tools import log  # pylint: disable=E0611,E0401,W0611
 from pylon.core.tools import web  # pylint: disable=E0611,E0401,W0611
 
-from plugins.integrations.models.pd.integration import SecretField  # pylint: disable=E0401
+from tools import SecretString
 
 
 class Method:  # pylint: disable=E1101,R0903,W0201
@@ -102,7 +102,7 @@ class Method:  # pylint: disable=E1101,R0903,W0201
             self, settings, data,
         ):
         """ Count input/output/data tokens """
-        api_token = SecretField.parse_obj(settings.merged_settings["api_token"])
+        api_token = SecretString(settings.merged_settings["api_token"])
         try:
             api_token = api_token.unsecret(settings.integration.project_id)
         except AttributeError:
@@ -164,7 +164,7 @@ class Method:  # pylint: disable=E1101,R0903,W0201
             self, settings, text,
         ):
         """ Call model """
-        api_token = SecretField.parse_obj(settings.merged_settings["api_token"])
+        api_token = SecretString(settings.merged_settings["api_token"])
         try:
             api_token = api_token.unsecret(settings.integration.project_id)
         except AttributeError:
@@ -209,7 +209,7 @@ class Method:  # pylint: disable=E1101,R0903,W0201
             self, settings, text, stream_id,
         ):
         """ Stream model """
-        api_token = SecretField.parse_obj(settings.merged_settings["api_token"])
+        api_token = SecretString(settings.merged_settings["api_token"])
         try:
             api_token = api_token.unsecret(settings.integration.project_id)
         except AttributeError:
@@ -261,7 +261,7 @@ class Method:  # pylint: disable=E1101,R0903,W0201
             self, settings, messages,
         ):
         """ Call model """
-        api_token = SecretField.parse_obj(settings.merged_settings["api_token"])
+        api_token = SecretString(settings.merged_settings["api_token"])
         try:
             api_token = api_token.unsecret(settings.integration.project_id)
         except AttributeError:
@@ -306,7 +306,7 @@ class Method:  # pylint: disable=E1101,R0903,W0201
             self, settings, messages, stream_id,
         ):
         """ Stream model """
-        api_token = SecretField.parse_obj(settings.merged_settings["api_token"])
+        api_token = SecretString(settings.merged_settings["api_token"])
         try:
             api_token = api_token.unsecret(settings.integration.project_id)
         except AttributeError:
@@ -441,9 +441,12 @@ class Method:  # pylint: disable=E1101,R0903,W0201
         if model_info is None:
             raise RuntimeError(f"No model info found: {model}")
         #
-        api_token = SecretField.parse_obj(
-            settings["settings"]["api_token"].get_secret_value()
-        )
+
+        try:
+            tkn = settings["settings"]["api_token"].get_secret_value()
+        except AttributeError:
+            tkn = settings["settings"]["api_token"]
+        api_token = SecretString(tkn)
         try:
             api_token = api_token.unsecret(settings["project_id"])
         except KeyError:
