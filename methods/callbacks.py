@@ -22,7 +22,7 @@ import json
 from pylon.core.tools import log  # pylint: disable=E0611,E0401,W0611
 from pylon.core.tools import web  # pylint: disable=E0611,E0401,W0611
 
-from tools import SecretString
+from tools import worker_client  # pylint: disable=E0401
 
 
 class Method:  # pylint: disable=E1101,R0903,W0201
@@ -102,11 +102,15 @@ class Method:  # pylint: disable=E1101,R0903,W0201
             self, settings, data,
         ):
         """ Count input/output/data tokens """
-        api_token = SecretString(settings.merged_settings["api_token"])
+        #
         try:
-            api_token = api_token.unsecret(settings.integration.project_id)
+            project_id = settings.integration.project_id
         except AttributeError:
-            api_token = api_token.unsecret(None)
+            project_id = None
+        #
+        api_token = worker_client.unsecret_data(
+            settings.merged_settings["api_token"], project_id
+        )
         #
         model_parameters = {}
         #
@@ -164,11 +168,15 @@ class Method:  # pylint: disable=E1101,R0903,W0201
             self, settings, text,
         ):
         """ Call model """
-        api_token = SecretString(settings.merged_settings["api_token"])
+        #
         try:
-            api_token = api_token.unsecret(settings.integration.project_id)
+            project_id = settings.integration.project_id
         except AttributeError:
-            api_token = api_token.unsecret(None)
+            project_id = None
+        #
+        api_token = worker_client.unsecret_data(
+            settings.merged_settings["api_token"], project_id
+        )
         #
         model_parameters = {}
         #
@@ -209,11 +217,15 @@ class Method:  # pylint: disable=E1101,R0903,W0201
             self, settings, text, stream_id,
         ):
         """ Stream model """
-        api_token = SecretString(settings.merged_settings["api_token"])
+        #
         try:
-            api_token = api_token.unsecret(settings.integration.project_id)
+            project_id = settings.integration.project_id
         except AttributeError:
-            api_token = api_token.unsecret(None)
+            project_id = None
+        #
+        api_token = worker_client.unsecret_data(
+            settings.merged_settings["api_token"], project_id
+        )
         #
         model_parameters = {}
         #
@@ -261,11 +273,15 @@ class Method:  # pylint: disable=E1101,R0903,W0201
             self, settings, messages,
         ):
         """ Call model """
-        api_token = SecretString(settings.merged_settings["api_token"])
+        #
         try:
-            api_token = api_token.unsecret(settings.integration.project_id)
+            project_id = settings.integration.project_id
         except AttributeError:
-            api_token = api_token.unsecret(None)
+            project_id = None
+        #
+        api_token = worker_client.unsecret_data(
+            settings.merged_settings["api_token"], project_id
+        )
         #
         model_parameters = {}
         #
@@ -306,11 +322,15 @@ class Method:  # pylint: disable=E1101,R0903,W0201
             self, settings, messages, stream_id,
         ):
         """ Stream model """
-        api_token = SecretString(settings.merged_settings["api_token"])
+        #
         try:
-            api_token = api_token.unsecret(settings.integration.project_id)
+            project_id = settings.integration.project_id
         except AttributeError:
-            api_token = api_token.unsecret(None)
+            project_id = None
+        #
+        api_token = worker_client.unsecret_data(
+            settings.merged_settings["api_token"], project_id
+        )
         #
         model_parameters = {}
         #
@@ -441,16 +461,14 @@ class Method:  # pylint: disable=E1101,R0903,W0201
         if model_info is None:
             raise RuntimeError(f"No model info found: {model}")
         #
-
         try:
-            tkn = settings["settings"]["api_token"].get_secret_value()
-        except AttributeError:
-            tkn = settings["settings"]["api_token"]
-        api_token = SecretString(tkn)
-        try:
-            api_token = api_token.unsecret(settings["project_id"])
-        except KeyError:
-            api_token = api_token.unsecret(None)
+            project_id = settings["project_id"]
+        except (AttributeError, KeyError):
+            project_id = None
+        #
+        api_token = worker_client.unsecret_data(
+            settings["settings"]["api_token"], project_id
+        )
         #
         if model_info["capabilities"]["embeddings"]:
             return {
