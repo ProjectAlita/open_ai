@@ -25,6 +25,12 @@ const OpenAiIntegrationModal = {
     >
         <template #body>
             <div class="form-group">
+                <h9>API Base</h9>
+                  <input type="text" placeholder="API Base"
+                  v-model="api_base">
+                  <div class="invalid-feedback">[[ error.api_base ]]</div>
+            </div>
+            <div class="form-group">
                 <h9>Secret API Key</h9>
                   <SecretFieldInput
                         v-model="api_token"
@@ -103,6 +109,7 @@ const OpenAiIntegrationModal = {
         },
         body_data() {
             const {
+                api_base,
                 api_token,
                 models,
                 project_id,
@@ -112,6 +119,7 @@ const OpenAiIntegrationModal = {
                 mode
             } = this
             return {
+                api_base,
                 api_token,
                 models,
                 project_id,
@@ -228,6 +236,7 @@ const OpenAiIntegrationModal = {
         },
         initialState: () => ({
             modal_style: {'height': '100px', 'border': ''},
+            api_base: "https://api.openai.com/v1",
             api_token: "",
             models: [],
             is_default: false,

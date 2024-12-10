@@ -55,6 +55,7 @@ class Method:  # pylint: disable=E1101,R0903,W0201
                 "target_class": "langchain_openai.chat_models.base.ChatOpenAI",
                 "target_args": None,
                 "target_kwargs": {
+                    "base_url": settings["api_base"],
                     "api_key": settings["api_token"],
                 },
                 "client_attr": "client._client",
@@ -84,6 +85,7 @@ class Method:  # pylint: disable=E1101,R0903,W0201
                 "target_class": "langchain_openai.chat_models.base.ChatOpenAI",
                 "target_args": None,
                 "target_kwargs": {
+                    "base_url": settings["api_base"],
                     "api_key": settings["api_token"],
                 },
                 "client_attr": "client._client",
@@ -144,6 +146,7 @@ class Method:  # pylint: disable=E1101,R0903,W0201
                     #
                     **model_parameters,
                     #
+                    "base_url": settings.merged_settings["api_base"],
                     "api_key": api_token,
                 },
                 "client_attr": None,
@@ -197,6 +200,7 @@ class Method:  # pylint: disable=E1101,R0903,W0201
                     #
                     **model_parameters,
                     #
+                    "base_url": settings.merged_settings["api_base"],
                     "api_key": api_token,
                 },
                 "client_attr": None,
@@ -246,6 +250,7 @@ class Method:  # pylint: disable=E1101,R0903,W0201
                     #
                     **model_parameters,
                     #
+                    "base_url": settings.merged_settings["api_base"],
                     "api_key": api_token,
                     #
                     "streaming": True,
@@ -302,6 +307,7 @@ class Method:  # pylint: disable=E1101,R0903,W0201
                     #
                     **model_parameters,
                     #
+                    "base_url": settings.merged_settings["api_base"],
                     "api_key": api_token,
                 },
                 "client_attr": None,
@@ -351,6 +357,7 @@ class Method:  # pylint: disable=E1101,R0903,W0201
                     #
                     **model_parameters,
                     #
+                    "base_url": settings.merged_settings["api_base"],
                     "api_key": api_token,
                     #
                     "streaming": True,
@@ -392,6 +399,7 @@ class Method:  # pylint: disable=E1101,R0903,W0201
                 "target_kwargs": {
                     "model": model_name,
                     #
+                    "base_url": settings["integration_data"]["settings"]["api_base"],
                     "api_key": api_token,
                 },
                 "client_attr": None,
@@ -426,6 +434,7 @@ class Method:  # pylint: disable=E1101,R0903,W0201
                 "target_kwargs": {
                     "model": model_name,
                     #
+                    "base_url": settings["integration_data"]["settings"]["api_base"],
                     "api_key": api_token,
                 },
                 "client_attr": None,
@@ -476,6 +485,7 @@ class Method:  # pylint: disable=E1101,R0903,W0201
                 "embedding_model_params": {
                     "model": model,
                     #
+                    "base_url": settings["settings"]["api_base"],
                     "api_key": api_token,
                 },
             }
@@ -494,6 +504,7 @@ class Method:  # pylint: disable=E1101,R0903,W0201
                     #
                     **model_parameters,
                     #
+                    "base_url": settings["settings"]["api_base"],
                     "api_key": api_token,
                 },
             }
@@ -505,6 +516,7 @@ class Method:  # pylint: disable=E1101,R0903,W0201
                 #
                 **model_parameters,
                 #
+                "base_url": settings["settings"]["api_base"],
                 "api_key": api_token,
             },
         }
