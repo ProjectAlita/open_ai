@@ -26,7 +26,7 @@ const OpenAiIntegrationModal = {
         <template #body>
             <div class="form-group">
                 <h9>API Base</h9>
-                  <input type="text" placeholder="API Base"
+                  <input type="text" class="form-control" placeholder="API Base"
                   v-model="api_base">
                   <div class="invalid-feedback">[[ error.api_base ]]</div>
             </div>
