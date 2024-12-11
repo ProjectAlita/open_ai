@@ -78,7 +78,7 @@ class RPC:
         #
         settings = {
             "api_token": token_field.unsecret(payload.get('project_id')),
-            "api_base": payload["api_base"],
+            "api_base": payload["settings"]["api_base"],
         }
         #
         raw_models = worker_client.ai_get_models(
