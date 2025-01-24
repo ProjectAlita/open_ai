@@ -2,7 +2,7 @@ from pylon.core.tools import web, log
 from traceback import format_exc
 
 from tools import rpc_tools, worker_client, this
-from pydantic import ValidationError
+from pydantic.v1 import ValidationError
 
 from ..models.integration_pd import OpenAISettings, AIModel
 from ..utils import predict_chat, predict_text, predict_chat_from_request, predict_from_request
