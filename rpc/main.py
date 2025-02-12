@@ -1,12 +1,11 @@
 from pylon.core.tools import web, log
 from traceback import format_exc
 
-from tools import rpc_tools, worker_client, this
+from tools import rpc_tools, worker_client, this, SecretString
 from pydantic.v1 import ValidationError
 
 from ..models.integration_pd import OpenAISettings, AIModel
 from ..utils import predict_chat, predict_text, predict_chat_from_request, predict_from_request
-from ...integrations.models.pd.integration import SecretField
 
 class RPC:
     integration_name = 'open_ai'
@@ -69,10 +68,10 @@ class RPC:
     @web.rpc(f'{integration_name}_set_models', 'set_models')
     @rpc_tools.wrap_exceptions(RuntimeError)
     def set_models(self, payload: dict):
-        if isinstance(payload['settings'].get('api_token', {}), SecretField):
+        if isinstance(payload['settings'].get('api_token', {}), SecretString):
             token_field = payload['settings'].get('api_token')
         else:
-            token_field = SecretField.parse_obj(
+            token_field = SecretString(
                 payload['settings'].get('api_token', {})
             )
         #

@@ -2,9 +2,8 @@ import json
 from typing import List, Optional
 from pydantic.v1 import BaseModel, root_validator, validator
 
-from tools import session_project, rpc_tools, VaultClient, worker_client, this
+from tools import session_project, rpc_tools, VaultClient, worker_client, this, SecretString
 from pylon.core.tools import log
-from ...integrations.models.pd.integration import SecretField
 
 
 def get_capabilities_map():
@@ -53,7 +52,7 @@ class AIModel(BaseModel):
         return token_limits.get(values.get('id'), 8096)
 
 class IntegrationModel(BaseModel):
-    api_token: SecretField | str
+    api_token: SecretString | str
     model_name: str = 'text-davinci-003'
     models: List[AIModel] = []
     api_version: str | None = None

@@ -4,7 +4,6 @@ import tiktoken
 from .models.integration_pd import IntegrationModel
 from .models.request_body import ChatCompletionRequestBody, CompletionRequestBody
 from pylon.core.tools import log
-# from ..integrations.models.pd.integration import SecretField
 
 
 def init_openai(settings, project_id):
